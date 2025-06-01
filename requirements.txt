@@ -1,0 +1,4 @@
+SQLAlchemy
+fuzzywuzzy
+requests
+dotenv

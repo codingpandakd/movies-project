@@ -1,6 +1,6 @@
 import random
 from thefuzz import fuzz # for the name match
-import movie_storage_sql as storage
+from data import movie_storage_sql as storage
 import movie_api as call_api
 
 def user_menu():
@@ -10,8 +10,9 @@ def user_menu():
         print(f"{'*' * 10} My Movies Database {'*' * 10}\n")
         print(f"Menu: \n0. Exit\n1. List movie\n2. Add movie\n3. Delete movie\n4. "
               f"Update movie\n5. Stats\n6. Random movie\n7. Search movies\n8. "
-              f"Movies sorted by rating\n9. Movie sorted by year\n10. Filter movies")
-        user_input = input("Enter choice (1-10): ")
+              f"Movies sorted by rating\n9. Movie sorted by year\n10. Filter movies"
+              f"\n11. Generate Website")
+        user_input = input("Enter choice (1-11): ")
         print()
         if user_input == "1": #if user type 1,2,3 etc call the function depends by number
             command_list_movies() #for example when user type 1 calling the list function
@@ -42,6 +43,10 @@ def user_menu():
             show_enter_to_continue()
         elif user_input == "10":
             command_filter_movies()
+            show_enter_to_continue()
+        elif user_input == "11":
+            get_website_name = input("Enter website name: ")
+            command_generate_website(get_website_name)
             show_enter_to_continue()
         elif user_input == "0":
             print("Bye!")
@@ -336,6 +341,55 @@ def command_filter_movies():
                         print(f"{movie_name}({year}), {rate}")
                 else:
                     print(f"{movie_name}({year}), {rate}")
+
+def command_generate_website(website_title):
+    #function for design of html
+    movie_grid = html_movie_grid()
+
+    #filepath for base html as a template and a new generated html file.
+    new_html_name = "./website/index.html"
+    html_template_path = "website/index_template.html"
+
+    with open(html_template_path, "r") as html_theme:
+        html_template = html_theme.read()
+
+    with open(new_html_name, "w") as new_index:
+        replace_template = html_template.replace("__TEMPLATE_TITLE__", website_title)
+        replace_template = replace_template.replace("__TEMPLATE_MOVIE_GRID__", movie_grid)
+        new_index.write(replace_template)
+    #a message after a page is successfully generated.
+    print("Website was generated successfully.")
+
+def html_movie_grid():
+    movies = storage.movies_data()
+    """
+    <li>
+            <div class="movie">
+                <img class="movie-poster" src="https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg">
+                <div class="movie-title">The Dark Knight</div>
+                <div class="movie-year">2008</div>
+            </div>
+    </li>
+    """
+    output = ''
+
+    for movie in movies:
+        movie_title = movie["title"]
+        movie_year = movie["year"]
+        movie_rate = movie["rating"]
+        movie_poster = movie["poster"]
+
+        output += '<li>'
+        output += '<div class="movie">'
+        output += f'<img class="movie-poster" src="{movie_poster}">'
+        output += f'<div class="movie-title">{movie_title}</div>'
+        output += f'<div class="movie-year">{movie_year}</div>'
+        output += f'<div class="movie-rate">IMDB: {movie_rate}</div>'
+        output += '</div>'
+        output += '</li>'
+
+    return output
+
 
 def main():
     """

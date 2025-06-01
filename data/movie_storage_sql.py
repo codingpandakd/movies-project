@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, text
 
 # Define the database URL
-DB_URL = "sqlite:///movies.db"
+DB_URL = "sqlite:///data/movies.db"
 
 # Create the engine
 engine = create_engine(DB_URL) #echo=True helps for debugging during development.
@@ -19,10 +19,25 @@ with engine.connect() as connection:
     """))
     connection.commit()
 
+def movies_data():
+    """Retrieve all movies from the database."""
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT * FROM movies"))
+        movies = result.mappings().all()
+    return [
+    {
+        "title": movie["title"],
+        "year": movie["year"],
+        "rating": movie["rating"],
+        "poster": movie["poster"]
+    }
+    for movie in movies
+]
+
 def list_movies():
     """Retrieve all movies from the database."""
     with engine.connect() as connection:
-        result = connection.execute(text("SELECT title, year, rating FROM movies"))
+        result = connection.execute(text("SELECT title, year, rating, poster FROM movies"))
         movies = result.fetchall()
     return {movie[0]: {"year": movie[1], "rating": movie[2]} for movie in movies}
 
@@ -58,3 +73,6 @@ def update_movie(title, rating):
         print(f"Movie {title} updated successfully")
       except Exception as e:
         print(f"Error: {e}")
+
+
+print(movies_data())
