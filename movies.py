@@ -1,6 +1,7 @@
 import random
 from thefuzz import fuzz # for the name match
 import movie_storage_sql as storage
+import movie_api as call_api
 
 def user_menu():
     """ user menu to get input and explain what does what """
@@ -48,33 +49,19 @@ def user_menu():
 
 def command_add_movie():
     """ if conditions meet by giving input add movie to data """
-    # Get the data from the JSON file
-    movies = storage.list_movies()
-
+    #first get movie title from user
     get_movie_name = input("Enter new movie name: ")
 
-    #to catch sensetive if Movie exist but you type movie with lowercase.
-    for movie_name in movies:
-        if get_movie_name.lower() == movie_name.lower():
-            print(f"Movie '{get_movie_name}' already exist.")
-            return
-    while True:
-        try:
-            get_movie_year = int(input("Enter new movie year: "))
-            break
-        except ValueError:
-            print("Please enter integer number")
-    while True:
-        try:
-            get_movie_rate = float(input("Enter new movie rating: "))
-            if 0 <= get_movie_rate <= 10:
-                storage.add_movie(get_movie_name, get_movie_year, get_movie_rate)
-                return get_movie_rate
-            break
-        except ValueError:
-            print("Please enter number")
-
-
+    # Get the data from the API
+    movie = call_api.api_call(get_movie_name)
+    if movie:
+        movie_title = movie["Title"]
+        movie_year = movie["Year"]
+        movie_rate = movie["Rate"]
+        movie_poster = movie["Poster"]
+        storage.add_movie(movie_title, movie_year, movie_rate, movie_poster)
+    else:
+        print(f"Movie '{get_movie_name}' not found.")
 
 def command_list_movies():
     """Retrieve and display all movies from the database."""
