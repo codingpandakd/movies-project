@@ -7,7 +7,7 @@ def user_menu(selected_uid, selected_username):
     """ user menu to get input and explain what does what """
     loop_menu = True
     while loop_menu:
-        print(f"Welcome back, {selected_username} !🎬\n")
+        print(f"Welcome back, {selected_username}! 🎬\n")
         print(f"Menu: \n0. Exit\n1. List movie\n2. Add movie\n3. Delete movie\n4. "
               f"Update movie\n5. Switch User\n6. Generate Website")
 
