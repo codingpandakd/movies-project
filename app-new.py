@@ -112,10 +112,10 @@ def command_update_movie(selected_uid, username):
     if get_movie_name in movies:
         while True:
             try:
-                get_new_star = float(input("Enter new movie rating: "))
+                new_note = input("Enter movie note: ")
                 for movie, infos in movies.items():
                     if get_movie_name.lower() == movie.lower(): #case sensetive
-                        storage.update_movie(get_movie_name, get_new_star, selected_uid)
+                        storage.update_movie(get_movie_name, new_note, selected_uid)
                         print(f"✅Movie '{movie}' updated successfully on {username}'s collection!")
                 break
             except ValueError:
@@ -386,13 +386,18 @@ def html_movie_grid(user_id):
         movie_year = movie["year"]
         movie_rate = movie["rating"]
         movie_poster = movie["poster"]
+        movie_note = movie["note"]
 
         output += '<li>'
+        output += '<div class="movie-block">'
         output += '<div class="movie">'
         output += f'<img class="movie-poster" src="{movie_poster}">'
         output += f'<div class="movie-title">{movie_title}</div>'
         output += f'<div class="movie-year">{movie_year}</div>'
         output += f'<div class="movie-rate">IMDB: {movie_rate}</div>'
+        output += '</div>'
+        if len(movie_note) > 0:
+            output += f'<div class="movie-note">{movie_note}</div>'
         output += '</div>'
         output += '</li>'
 

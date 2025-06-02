@@ -15,7 +15,8 @@ with engine.connect() as connection:
             year INTEGER NOT NULL,
             rating REAL NOT NULL,
             user_id INTEGER NOT NULL,
-            poster TEXT NOT NULL
+            poster TEXT NOT NULL,
+            note TEXT DEFAULT ''
         )
     """))
     connection.execute(text("""
@@ -41,7 +42,8 @@ def movies_data(user_id):
         "title": movie["title"],
         "year": movie["year"],
         "rating": movie["rating"],
-        "poster": movie["poster"]
+        "poster": movie["poster"],
+        "note": movie["note"]
     }
     for movie in movies
 ]
@@ -114,12 +116,12 @@ def delete_movie(title, user_id):
       except Exception as e:
         print(f"Error: {e}")
 
-def update_movie(title, rating, user_id):
+def update_movie(title, new_note, user_id):
     """Update a movie's rating in the database."""
-    params = {"title": title, "rating": rating, "user_id": user_id}
+    params = {"title": title, "new_note": new_note, "user_id": user_id}
     with engine.connect() as connection:
       try:
-        connection.execute(text("UPDATE movies SET rating = :rating WHERE title = :title AND user_id = :user_id"), params)
+        connection.execute(text("UPDATE movies SET note = :new_note WHERE title = :title AND user_id = :user_id"), params)
         connection.commit()
       except Exception as e:
         print(f"Error: {e}")
