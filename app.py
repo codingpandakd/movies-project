@@ -3,56 +3,62 @@ from thefuzz import fuzz # for the name match
 from data import movie_storage_sql as storage
 import movie_api as call_api
 
-def user_menu():
+def user_menu(selected_uid, selected_username):
     """ user menu to get input and explain what does what """
     loop_menu = True
     while loop_menu:
-        print(f"{'*' * 10} My Movies Database {'*' * 10}\n")
+        print(f"Welcome back, {selected_username} !🎬\n")
         print(f"Menu: \n0. Exit\n1. List movie\n2. Add movie\n3. Delete movie\n4. "
-              f"Update movie\n5. Stats\n6. Random movie\n7. Search movies\n8. "
-              f"Movies sorted by rating\n9. Movie sorted by year\n10. Filter movies"
-              f"\n11. Generate Website")
-        user_input = input("Enter choice (1-11): ")
+              f"Update movie\n5. Switch User\n6. Generate Website")
+
+        """
+              f"\n7. Random movie\n8. Search movies\n9. "
+              f"Movies sorted by rating\n10. Movie sorted by year\n11. Filter movies"
+              IMPORTANT_NOTE: THE REST IS IN PROGRESS. IMPLEMENTED USER SELECT FUNCTION ON LAST UPDATE
+        """
+
+        user_input = input("Enter choice: ")
         print()
         if user_input == "1": #if user type 1,2,3 etc call the function depends by number
-            command_list_movies() #for example when user type 1 calling the list function
+            command_list_movies(selected_uid, selected_username) #for example when user type 1 calling the list function
             show_enter_to_continue() #to show press enter to continue message
         elif user_input == "2":
-            command_add_movie()
+            command_add_movie(selected_uid, selected_username)
             show_enter_to_continue()
         elif user_input == "3":
-            command_delete_movie()
+            command_delete_movie(selected_uid, selected_username)
             show_enter_to_continue()
         elif user_input == "4":
-            command_update_movie()
+            command_update_movie(selected_uid, selected_username)
             show_enter_to_continue()
         elif user_input == "5":
-            command_statistics()
+            main()
             show_enter_to_continue()
         elif user_input == "6":
-            command_random_movie()
-            show_enter_to_continue()
-        elif user_input == "7":
-            command_search_movie()
-            show_enter_to_continue()
-        elif user_input == "8":
-            command_movies_sorted("rate")
-            show_enter_to_continue()
-        elif user_input == "9":
-            command_movies_sorted("year")
-            show_enter_to_continue()
-        elif user_input == "10":
-            command_filter_movies()
-            show_enter_to_continue()
-        elif user_input == "11":
-            get_website_name = input("Enter website name: ")
-            command_generate_website(get_website_name)
+            command_generate_website(selected_uid, selected_username)
             show_enter_to_continue()
         elif user_input == "0":
             print("Bye!")
             return
+        """
+        elif user_input == "7":
+            command_random_movie()
+            show_enter_to_continue()
+        elif user_input == "8":
+            command_search_movie()
+            show_enter_to_continue()
+        elif user_input == "9":
+            command_movies_sorted("rate")
+            show_enter_to_continue()
+        elif user_input == "10":
+            command_movies_sorted("year")
+            show_enter_to_continue()
+        elif user_input == "11":
+            command_filter_movies()
+            show_enter_to_continue()
+        """
 
-def command_add_movie():
+def command_add_movie(selected_uid, username):
     """ if conditions meet by giving input add movie to data """
     #first get movie title from user
     get_movie_name = input("Enter new movie name: ")
@@ -64,56 +70,62 @@ def command_add_movie():
         movie_year = movie["Year"]
         movie_rate = movie["Rate"]
         movie_poster = movie["Poster"]
-        storage.add_movie(movie_title, movie_year, movie_rate, movie_poster)
+        movie_user_id = selected_uid
+        storage.add_movie(movie_title, movie_year, movie_rate, movie_poster, movie_user_id)
+        print(f"✅Movie {movie_title} added to {username}'s collection!")
     else:
-        print(f"Movie '{get_movie_name}' not found.")
+        print(f"❌Movie '{get_movie_name}' not found.")
 
-def command_list_movies():
+def command_list_movies(selected_uid, username):
     """Retrieve and display all movies from the database."""
-    movies = storage.list_movies()
-    print(f"{len(movies)} movies in total")
-    #to count total we check how much key,value exist in the dict
-    for movie_name, infos in movies.items():
-        #.items return key and value which we used 2 values to save seperately
-        #for one is key second one is value
-        year = infos.get("year", "N/A")
-        rate = infos.get("rating", "N/A")
-        print(f"{movie_name} ({year}): {rate}")
+    movies = storage.list_movies(selected_uid)
+    if len(movies) > 0:
+        print(f"{len(movies)} movies in total in {username}'s collection!")
+        #to count total we check how much key,value exist in the dict
+        for movie_name, infos in movies.items():
+            #.items return key and value which we used 2 values to save seperately
+            #for one is key second one is value
+            year = infos.get("year", "N/A")
+            rate = infos.get("rating", "N/A")
+            print(f"{movie_name} ({year}): {rate}")
+    else:
+        print(f"📢 {username}, your movie collection is empty. Add some movies!")
 
 
-def command_delete_movie():
+def command_delete_movie(selected_uid, username):
     """ when user input match with movie, delete it """
     # Get the data from DB
-    movies = storage.list_movies()
+    movies = storage.list_movies(selected_uid)
+    selected_uid = int(selected_uid)
     get_movie_name = input("Enter movie name to delete: ")
-
-    if get_movie_name in movies: #if match the user input name with the key
-        storage.delete_movie(get_movie_name)
+    if get_movie_name in movies and selected_uid == movies[get_movie_name]["user_id"]: #if match the user input name with the key
+        storage.delete_movie(get_movie_name, selected_uid)
+        print(f"✅Movie '{get_movie_name}' deleted successfully from {username}'s collection!")
     else:
-        print(f"Movie {get_movie_name} doesn't exist!")
+        print(f"❌Movie '{get_movie_name}' doesn't exist in {username}'s collection!")
 
-def command_update_movie():
+def command_update_movie(selected_uid, username):
     """ when user input match with a movie, update by user rating """
     # Get the data from DB
-    movies = storage.list_movies()
-
+    movies = storage.list_movies(selected_uid)
     get_movie_name = input("Enter movie name: ")
     if get_movie_name in movies:
         while True:
             try:
-                get_new_star = float(input("Enter new movie rating: "))
+                new_note = input("Enter movie note: ")
                 for movie, infos in movies.items():
                     if get_movie_name.lower() == movie.lower(): #case sensetive
-                        storage.update_movie(get_movie_name, get_new_star)
+                        storage.update_movie(get_movie_name, new_note, selected_uid)
+                        print(f"✅Movie '{movie}' updated successfully on {username}'s collection!")
                 break
             except ValueError:
                 print("Please enter number")
     else:
-        print(f"Movie {get_movie_name} doesn't exist!")
+        print(f"❌Movie '{get_movie_name}' not exist in {username}'s collection!")
 
-
+"""
 def command_statistics():
-    """ to show some statistics of films best film, worst, averate rating etc """
+    #to show some statistics of films best film, worst, averate rating etc
 
     # Get the data from the JSON file
     movies = storage.list_movies()
@@ -166,18 +178,18 @@ def command_statistics():
         else:
             print(f"Worst movie: {', '.join(worst_movies)} - {worst_rate}")
 
+"""
 
 def show_enter_to_continue():
     """ just print to screen message """
     print()
     input("Press Enter to continue")
 
-
+"""
 def command_random_movie():
-    """
-    works with random module, imported ,
-    create a random number beetwen 0 and movies length then print random movie
-    """
+    #works with random module, imported ,
+    #create a random number beetwen 0 and movies length then print random movie
+    
     movies = storage.list_movies()
 
     random_movie_id = random.randint(0,len(movies)-1)
@@ -189,9 +201,10 @@ def command_random_movie():
         if name == choose_random_movie: #if name match with the random name then print it.
             print(f"Your movie for tonight: {name}, it's rated {rate}")
 
-
+"""
+"""
 def command_search_movie():
-    """ search movie by name """
+    #search movie by name
 
     # Get the data from the JSON file
     movies = storage.list_movies()
@@ -212,12 +225,11 @@ def command_search_movie():
         print(f"The movie {get_movie_name} doesn't exist.")
         suggest_similar_movies(movies, get_movie_name)
 
-
+"""
+"""
 def suggest_similar_movies(movies, get_movie_name):
-    """
-    used fuzz module to show if has
-    typing error suggest the films
-    """
+    #used fuzz module to show if has
+    #typing error suggest the films
     suggestions = []
     for movie_name in movies.keys():
         score = fuzz.partial_ratio(movie_name.lower(), get_movie_name.lower())
@@ -229,11 +241,11 @@ def suggest_similar_movies(movies, get_movie_name):
             print(f"- {name}")
     else:
         print("No similar movie names found.")
+"""
 
+"""
 def command_movies_sorted(sort_type):
-    """
-    sort type, by type sort the movies
-    """
+    #sort type, by type sort the movies
 
     movies = storage.list_movies()
 
@@ -255,9 +267,11 @@ def command_movies_sorted(sort_type):
             rate = infos.get("rating", "N/A")
             year = infos.get("year", "N/A")
             print(f"{movie_name} ({year} - {rate})")
+"""
 
+"""
 def command_filter_movies():
-    """filtering movies and print them"""
+    #filtering movies and print them
     # Get the data from the JSON file
     movies = storage.list_movies()
 
@@ -341,13 +355,15 @@ def command_filter_movies():
                         print(f"{movie_name}({year}), {rate}")
                 else:
                     print(f"{movie_name}({year}), {rate}")
+"""
 
-def command_generate_website(website_title):
+def command_generate_website(user_id, username):
     #function for design of html
-    movie_grid = html_movie_grid()
+    movie_grid = html_movie_grid(user_id)
+    website_title = f"{username}'s Movies Collection!"
 
     #filepath for base html as a template and a new generated html file.
-    new_html_name = "./website/index.html"
+    new_html_name = f"./website/{username}.html"
     html_template_path = "website/index_template.html"
 
     with open(html_template_path, "r") as html_theme:
@@ -358,19 +374,11 @@ def command_generate_website(website_title):
         replace_template = replace_template.replace("__TEMPLATE_MOVIE_GRID__", movie_grid)
         new_index.write(replace_template)
     #a message after a page is successfully generated.
-    print("Website was generated successfully.")
+    print(f"✅Website was generated successfully for {username}'s collection! as '{username}.html'")
 
-def html_movie_grid():
-    movies = storage.movies_data()
-    """
-    <li>
-            <div class="movie">
-                <img class="movie-poster" src="https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg">
-                <div class="movie-title">The Dark Knight</div>
-                <div class="movie-year">2008</div>
-            </div>
-    </li>
-    """
+def html_movie_grid(user_id):
+    """ output for html """
+    movies = storage.movies_data(user_id)
     output = ''
 
     for movie in movies:
@@ -378,24 +386,72 @@ def html_movie_grid():
         movie_year = movie["year"]
         movie_rate = movie["rating"]
         movie_poster = movie["poster"]
+        movie_note = movie["note"]
 
         output += '<li>'
+        output += '<div class="movie-block">'
         output += '<div class="movie">'
         output += f'<img class="movie-poster" src="{movie_poster}">'
         output += f'<div class="movie-title">{movie_title}</div>'
         output += f'<div class="movie-year">{movie_year}</div>'
         output += f'<div class="movie-rate">IMDB: {movie_rate}</div>'
         output += '</div>'
+        if len(movie_note) > 0:
+            output += f'<div class="movie-note">{movie_note}</div>'
+        output += '</div>'
         output += '</li>'
 
     return output
 
 
+def select_user_list():
+    users = storage.users_data()
+    print("\nSelect a user:")
+    for user_order, username in users.items():
+        user_username = username["username"]
+        print(f"{user_order}. {user_username}")
+    command_create_user = max(user for user in users) + 1
+    command_delete_user = command_create_user + 1
+    print(f"{command_create_user}. Create a new user")
+    print(f"{command_delete_user}. Delete a user\n")
+    return command_create_user, command_delete_user
+
+def select_user():
+    print(f"Welcome to the Movie App! 🎬")
+    users = storage.users_data()
+    command_create_user, command_delete_user = select_user_list()
+    loop_menu = True
+    while loop_menu:
+        get_user_choice = input("Enter choice: ")
+        if not get_user_choice.isdigit():
+            print("Please enter a number.")
+            continue
+
+        get_user_choice = int(get_user_choice)
+        if get_user_choice in users:
+            selected_username = users[get_user_choice]["username"]
+            selected_uid = users[get_user_choice]["user_id"]
+            return selected_uid, selected_username
+        elif get_user_choice == command_create_user:
+            get_new_username = input("Please enter your new username: ")
+            storage.create_user(get_new_username)
+            users = storage.users_data() #refresh data
+            command_create_user, command_delete_user = select_user_list() #refresh create_user number
+            continue
+        elif get_user_choice == command_delete_user:
+            get_delete_username = input("Please enter a username to delete: ")
+            storage.delete_user(get_delete_username)
+            users = storage.users_data()  # refresh data
+            command_create_user, command_delete_user = select_user_list()  # refresh create_user number
+        else:
+            print("Please select one of the options")
+
 def main():
     """
     classic main folder to run the program from here also data included.
     """
-    user_menu() #call function user menu with parameter movies to get dict in function
+    selected_uid, selected_username = select_user()
+    user_menu(selected_uid, selected_username) #call function user menu with parameter movies to get dict in function
 
 if __name__ == "__main__":
     main()
